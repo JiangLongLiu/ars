@@ -34,25 +34,31 @@ public class ReservationServiceImpl {
 		//1.加载数据库
 		db=DB.getInstance();
 		//2.列举，接收输入首页菜单
+		
 		homePage();
 	}
 	
 	
 	//2.列举，接收输入首页菜单--后加q
-	private final void homePage() throws Exception{
+	private void  homePage() throws Exception{
 		ProcessCommonPrint.printHead("Welcome to Xi’an Airline");
 		System.out.println("1. Reservation");
 		System.out.println();
 		System.out.println("2. Check Reservation");
-		ProcessCommonPrint.printFoot(1);
+		ProcessCommonPrint.printFoot(true,1);
 		 
          String[] strArr=new String[2];
          String s= ProcessCommonPrint.getUserInput(strArr,1);
          
+         
          if("1".equals(s)){
-        	 departureAirport();
+        	 if(departureAirport(true)==-1){
+        		 homePage(); 
+        	 }
          }else if("2".equals(s)){
-        	 doCheckReservation();
+        	 if(doCheckReservation()==-1){
+        		homePage(); 
+        	 }
          }else if("q".equals(s)){
         	 quit_();
          }
@@ -60,70 +66,89 @@ public class ReservationServiceImpl {
 	}
 	
 	//1.1 选择出发地
-	public void departureAirport() throws Exception{
+	public int departureAirport(boolean isDisplay) throws Exception{
+		int b=0;
 		ProcessCommonPrint.printHead("Departure Airport");
 		//调用业务方法，得到本页面菜单
 		Map<String, List<Flight>> map=fdi.groupByDepartPlace(db.getFlights());
 		String[] strArr=ProcessCommonPrint.printMapBody(map);
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(isDisplay,2);
 		
 		String s=ProcessCommonPrint.getUserInput(strArr, 2);
-         
+		boolean invokeFlag=false;
 		for(int m=1;m<=strArr.length;m++){
 			if((m+"").equals(s)){
 				if(rvs==null){
 					  rvs=new Reservation();  
 				  }
 				  rvs.setDepartPlace(strArr[Integer.parseInt(s)-1]);
-		          resultList=map.get(strArr[Integer.parseInt(s)-1]);
-		          arrivalAirport();
+				  resultList=map.get(strArr[Integer.parseInt(s)-1]);
+		          invokeFlag=true;
 		          break;
 			}
 		}
-         
+         if(invokeFlag){
+	          if(arrivalAirport(true)==-1){
+	        	  departureAirport(false);
+	          }
+         }
+		
 		 if("q".equalsIgnoreCase(s)){
         	 quit_();
          }else if("p".equalsIgnoreCase(s)){
-        	 prePage();
+        	 b=-1;
          }
+		 return b;
 	}
 	
 	//1.1.1 选择到达地
-	public void arrivalAirport() throws Exception{
-		
+	public int arrivalAirport(boolean isDisplay) throws Exception{
+		int b=0;
 		ProcessCommonPrint.printHead("Arrival Airport");
 		//调用业务方法，得到本页面菜单
 		Map<String, List<Flight>> map=fdi.groupByArrivePlace(resultList);
 		String[] strArr=ProcessCommonPrint.printMapBody(map);
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(isDisplay,2);
 		
 		String s=ProcessCommonPrint.getUserInput(strArr, 2);
-         
+		boolean invokeFlag=false;
+		String y=null;
          for(int m=1;m<=strArr.length;m++){
  			if((m+"").equals(s)){
  				if(rvs==null){
  					  rvs=new Reservation();  
  				  }
  				  rvs.setArrivePlace(strArr[Integer.parseInt(s)-1]);
- 		          resultList=map.get(strArr[Integer.parseInt(s)-1]);
- 		         departDate();
+ 		          y=s;
+ 		          invokeFlag=true;
  		          break;
  			}
  		}
          
+         
+         if(invokeFlag){
+				if(departDate(true)==-1){
+					arrivalAirport(false); 
+		        }else{
+		        	resultList=map.get(strArr[Integer.parseInt(y)-1]);
+		        }
+		 }
+         
+         
         if("q".equalsIgnoreCase(s)){
-       	 quit_();
+       	 	quit_();
         }else if("p".equalsIgnoreCase(s)){
-       	 prePage();
+        	b=-1;
         }
+        return b;
 	}
 	
 	//1.1.2 选择出发日期
-	public void departDate() throws Exception{
-		
+	public int departDate(boolean isDisplay) throws Exception{
+		int b=0;
 		ProcessCommonPrint.printHead("Depart Date");
 		System.out.println("Please, Input depart date. (YYYY-MM-DD)");
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(isDisplay,2);
 		
 		
 		InputStreamReader isr=new InputStreamReader(System.in);
@@ -131,98 +156,129 @@ public class ReservationServiceImpl {
         String s=null;
 		while(true){
 	      	  s=br.readLine();
-	      	 String rexp = "^((\\d{2}(([02468][048])|([13579][26]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])))))|(\\d{2}(([02468][1235679])|([13579][01345789]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|(1[0-9])|(2[0-8]))))))";
-	      	 Pattern pat = Pattern.compile(rexp);  
-	         Matcher mat = pat.matcher(s);  
-	         boolean flag = mat.matches();
-	         if(flag){
-	        	 SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd");
-	        	 long leftLimit=DateUtil.stringDate2Long(sf.format(new Date()))+86400000L;//明天
-	        	 long rightLimit=leftLimit+86400000L*364;//明天
-	        	 long inputDate=DateUtil.stringDate2Long(s);
-	        	 if(inputDate>leftLimit&&inputDate<rightLimit){
-		        	 break;
-	        	 }else{
-	        		 System.out.println("(Message : ERROR!!! You can input date from "+sf.format(new Date(leftLimit))+" to "+sf.format(new Date(rightLimit))+")");
-	        		 System.out.print("Input:");
-	        	 }
-	      	  }else{
-	      		  System.out.println(" error massage. (Message : ERROR!!! You have to input date in right format.)");
-	      		  System.out.print("Input:");
-	      		  continue;
-	      	  }
-	          if("q".equalsIgnoreCase(s)||"p".equalsIgnoreCase(s)){
+	      	 if("q".equalsIgnoreCase(s)||"p".equalsIgnoreCase(s)){
 	          	  break;
+	          }else{
+	        	 String rexp = "^((\\d{2}(([02468][048])|([13579][26]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])))))|(\\d{2}(([02468][1235679])|([13579][01345789]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|(1[0-9])|(2[0-8]))))))";
+	 	      	 Pattern pat = Pattern.compile(rexp);  
+	 	         Matcher mat = pat.matcher(s);  
+	 	         boolean flag = mat.matches();
+	 	         
+	 	         if(flag){
+	 	        	 SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd");
+	 	        	 long leftLimit=DateUtil.stringDate2Long(sf.format(new Date()))+86400000L;//明天
+	 	        	 long rightLimit=leftLimit+86400000L*364;//明天
+	 	        	 long inputDate=DateUtil.stringDate2Long(s);
+	 	        	 if(inputDate>leftLimit&&inputDate<rightLimit){
+	 	        		 if(rvs==null){
+	 	       			    rvs=new Reservation(); 
+	 	       		  	 }
+	 	        		    rvs.setDepartDate(s);
+	 	        		    
+	 	        		if(departTime(true)==-1){
+	 	        				departDate(false);
+	 	        		}
+	 		        	 break;
+	 	        	 }else{
+	 	        		 System.out.println("(Message : ERROR!!! You can input date from "+sf.format(new Date(leftLimit))+" to "+sf.format(new Date(rightLimit))+")");
+	 	        		 System.out.print("Input:");
+	 	        	 }
+	 	      	  }else{
+	 	      		  System.out.println(" error massage. (Message : ERROR!!! You have to input date in right format.)");
+	 	      		  System.out.print("Input:");
+	 	      		  continue;
+	 	      	  }
 	          }
 		 }
 		
-		if(rvs==null){
-			  rvs=new Reservation(); 
-		  }
-		rvs.setDepartDate(s);
-		departTime();
-		
-	}
+		if("q".equalsIgnoreCase(s)){
+			quit_();
+		}else if("p".equalsIgnoreCase(s)){
+			b=-1;
+		}
+	
+		return b;
+}
 	
 	//1.1.3 出发时间
-	public void departTime() throws Exception{
-		
+	public int departTime(boolean isDisplay) throws Exception{
+		int b=0;
 		ProcessCommonPrint.printHead("Arrival Airport");
 		//调用业务方法，得到本页面菜单
 		Map<String, List<Flight>> map=fdi.groupByDepartTime(resultList);
 		String[] strArr=ProcessCommonPrint.printMapBody(map);
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(isDisplay,2);
 		
 		String s=ProcessCommonPrint.getUserInput(strArr, 2);
-
+		boolean invokeFlag=false;
+		String y=null;
         for(int m=1;m<=strArr.length;m++){
  			if((m+"").equals(s)){
  				if(rvs==null){
  					  rvs=new Reservation();  
  				  }
  				  rvs.setDepartTime(strArr[Integer.parseInt(s)-1]);
- 		          resultList=map.get(strArr[Integer.parseInt(s)-1]);
- 		          customerTotal();
+ 				  y=s;
+ 		          invokeFlag=true;
  		          break;
  			}
  		}
         
+        if(invokeFlag){
+			if(customerTotal(true)==-1){
+				departTime(false);
+			}else{
+				resultList=map.get(strArr[Integer.parseInt(y)-1]);
+			}
+        }
+    
         if("q".equalsIgnoreCase(s)){
           	 quit_();
-           }else if("p".equalsIgnoreCase(s)){
-          	 prePage();
-           }
-		
+        }else if("p".equalsIgnoreCase(s)){
+          	 b= -1;
+        }
+       
+        return b;
 	}
 	
 	
 	//1.1.4 选择人员
-	public void customerTotal() throws Exception{
-		
+	public int customerTotal(boolean isDisplay) throws Exception{
+		int b=0;
 		//成人人数
-		int adultTotal=getCustomerTotal("Adult");
-		//儿童人数
-		int childTotal=getCustomerTotal("Child");
-		
-		if(adultTotal+childTotal==0){
-			System.out.println("(Message : ERROR!!! You have toinput more than 0.");
-			customerTotal();
+		int adultTotal=getCustomerTotal(true,"Adult");
+		int childTotal=0;
+		if(adultTotal!=-1){
+			childTotal=getCustomerTotal(true,"Child");
+			if(childTotal!=-1){
+				if(adultTotal+childTotal==0){
+					System.out.println("(Message : ERROR!!! You have toinput more than 0.");
+					customerTotal(true);
+				}else{
+					rvs.setAdultTotal(adultTotal);
+					rvs.setChildTotal(childTotal);
+					if(seatClass()==-1)
+						customerTotal(false);
+				}
+			}else{
+				b=-1;
+			}
 		}else{
-			rvs.setAdultTotal(adultTotal);
-			rvs.setChildTotal(childTotal);
-			seatClass();
+			b=-1;
 		}
+		
+		return b;
 	}
 
 	//1.1.4.1 乘客数量
-	public int getCustomerTotal(String ctype) throws Exception{
+	public int getCustomerTotal(boolean isDisplay,String ctype) throws Exception{
 		
 		ProcessCommonPrint.printHead("Passenger");
 		System.out.println("Please, Input the number of "+ctype);
 		System.out.println();
 		System.out.println("(0 ~ 10)");
 		System.out.println();
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(isDisplay,2);
 		
 		int total=0;
 		
@@ -232,28 +288,36 @@ public class ReservationServiceImpl {
 		while(true){
 	      	 s=br.readLine();
 
-	         if("q".equalsIgnoreCase(s)||"p".equalsIgnoreCase(s))
-	          	  break;
-	         
-	      	 String rexp = "^\\d|10$";
-	      	 Pattern pat = Pattern.compile(rexp);  
-	         Matcher mat = pat.matcher(s);  
-	         boolean flag = mat.matches();
-	         if(flag){
-	        	 total= Integer.parseInt(s);
+	         if("q".equalsIgnoreCase(s)||"p".equalsIgnoreCase(s)){
 	        	 break;
-	      	  }else{
-	      		  System.out.println(" error massage. (Message : ERROR!!! You have to input date in right format.)");
-	      		  System.out.print("Input:");
-	      		  continue;
-	      	  }
+	         }else{
+	        	 String rexp = "^\\d|10$";
+		      	 Pattern pat = Pattern.compile(rexp);  
+		         Matcher mat = pat.matcher(s);  
+		         boolean flag = mat.matches();
+		         if(flag){
+		        	 total= Integer.parseInt(s);
+		        	 break;
+		      	  }else{
+		      		  System.out.println(" error massage. (Message : ERROR!!! You have to input date in right format.)");
+		      		  System.out.print("Input:");
+		      		  continue;
+		      	  }
+	         }
 		 }
+		
+		   if("q".equalsIgnoreCase(s)){
+	          	 quit_();
+	        }else if("p".equalsIgnoreCase(s)){
+	          	 total=-1;
+	        }
+		
 		return total;
 	}
 	
 	//1.1.5 选择座位等级
-	public void seatClass() throws Exception{
-		
+	public int seatClass() throws Exception{
+		int b=0;
 		ProcessCommonPrint.printHead("Seat Class");
 		List<SeatClass> scs=fdi.groupBySeatClass(resultList);
 		SeatClass sc=null;
@@ -262,7 +326,7 @@ public class ReservationServiceImpl {
 			System.out.println((i+1)+". "+sc.getSeatName()+" ("+sc.getSeatAmount()+" Yuan)");
 			System.out.println();
 		}
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(true,2);
 		
 		String s=ProcessCommonPrint.getUserInput(new String[scs.size()], 2);
         
@@ -275,22 +339,23 @@ public class ReservationServiceImpl {
  				  }
  				  rvs.setSeatClass(scs.get(m).getSeatName());
  				  rvs.setTotalAmount((rvs.getAdultTotal()+rvs.getChildTotal())*scs.get(m).getSeatAmount());
+ 				  rvs.setFlightName(resultList.get(0).getFlightName());
+ 		  		  rvs.setReservationNumber(genernateResNum());
  		          break;
  			}
  		}
         
         
+  		 if(invokeFlag){
+  			displayAccountInfo();
+  		 }
+        
         if("q".equalsIgnoreCase(s)){
           	 quit_();
-           }else if("p".equalsIgnoreCase(s)){
-          	 prePage();
-           }
-
-   		 rvs.setFlightName(resultList.get(0).getFlightName());
-   		 rvs.setReservationNumber(genernateResNum());
-   		 if(invokeFlag){
-   			displayAccountInfo(); 
-   		 }
+        }else if("p".equalsIgnoreCase(s)){
+          	 b=-1;
+        }
+   		 return b;
 	}
 	
 	
@@ -307,10 +372,11 @@ public class ReservationServiceImpl {
 	}
 	
 	//1.2
-	public void doCheckReservation() throws IOException{
+	public int doCheckReservation() throws IOException{
+		int b=0;
 		ProcessCommonPrint.printHead("Check Reservation");
 		System.out.println("Pease, Input reservation number.");
-		ProcessCommonPrint.printFoot(2);
+		ProcessCommonPrint.printFoot(true,2);
 		
 		//接收输入
 		InputStreamReader isr=new InputStreamReader(System.in);
@@ -325,7 +391,7 @@ public class ReservationServiceImpl {
 		if("q".equalsIgnoreCase(s)){
          	 quit_();
         }else if("p".equalsIgnoreCase(s)){
-         	 prePage();
+         	b=-1;
         }
 		Reservation rr=findByNumber(s);
 		if(rr!=null){
@@ -333,7 +399,7 @@ public class ReservationServiceImpl {
 		}else{
 			System.out.println("(Message : ERROR!!! There is no such data.)");
 		}
-		
+		return b;
 	}
 	
 	private final void quit_(){

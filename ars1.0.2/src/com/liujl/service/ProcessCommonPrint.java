@@ -22,14 +22,16 @@ public class ProcessCommonPrint {
 		System.out.println();
 	}
 	
-	public static void printFoot(int n){
+	public static void printFoot(boolean isDisplay,int n){
 		System.out.println();
-		if(n==2){
+		if(n==2&&isDisplay){
+			
 			System.out.println();
 			System.out.println("P. Previous Menu");
 		}
 		System.out.println("Q. Quit");
 		System.out.println();
+		System.out.println("Pease, Input reservation number.");
 		System.out.println(SP);
 		System.out.print("Input:");
 	}
@@ -54,7 +56,7 @@ public class ProcessCommonPrint {
 	      	  }else{
 	      		qp=new String[]{"q","p"}; 
 	      	  }
-	         for(int j=0;i<qp.length;j++){
+	         for(int j=0;j<qp.length;j++){
 	        	 if(qp[j].equalsIgnoreCase(s)){
 	        		 flag=true;
 	        		 break outer;
