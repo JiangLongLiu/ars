@@ -8,7 +8,12 @@ public class PersonServiceBean {
 		this.user = user;
 	}
 	public void save() {
-		System.out.println("user= "+user);
+		if("zhangsan".equals(this.user)){
+			System.out.println("user= "+user);
+		}else{
+			System.out.println(this.user+" haven't the enough privilege.");
+		}
+		
 	}
 	public String getUser() {
 		return user;
