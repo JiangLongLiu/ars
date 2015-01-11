@@ -1,4 +1,4 @@
-package com.liujl.service.impl;
+package com.liujl.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import com.liujl.common.util.FileUtil;
 import com.liujl.dao.FlightDao;
 import com.liujl.dao.impl.FlightDaoImpl;
 import com.liujl.dao.impl.ReservationDaoImpl;
-import com.liujl.service.impl.ProcessCommonPrint;
+import com.liujl.service.ProcessCommonPrint;
 
 public class ReservationServiceImpl {
 	private FlightDao fdi=new FlightDaoImpl();

@@ -1,4 +1,4 @@
-package com.liujl.service.impl;
+package com.liujl.service;
 
 import java.io.BufferedReader;
 import java.io.File;
